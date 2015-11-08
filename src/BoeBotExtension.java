@@ -82,7 +82,7 @@ public class BoeBotExtension extends Extension implements PreferenceGenerator
 		{
 
 			public JMenuItem getToolsMenuItem(BPackage bp) {
-				JMenuItem item = new JMenuItem("Upload to RPI");
+				JMenuItem item = new JMenuItem("Upload to BoeBot");
 				final BPackage bpackage = bp;
 				item.addActionListener(new ActionListener() 
 				{
@@ -126,7 +126,7 @@ public class BoeBotExtension extends Extension implements PreferenceGenerator
 	}
 
 	public void loadValues() {
-		ipField.setText(bluej.getExtensionPropertyString("BOEBOT-IP", "192.168.2.1"));
+		ipField.setText(bluej.getExtensionPropertyString("BOEBOT-IP", "10.10.10.1"));
 	}
 
 	public void saveValues() {

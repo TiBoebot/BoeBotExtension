@@ -263,10 +263,10 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 							if(session != null)
 								session.disconnect();
 							
-							String ip = "192.168.137.139";							
+							String ip = "10.10.10.1";							
 							
 							if(BoeBotControlFrame.this.bluej != null)
-								ip = BoeBotControlFrame.this.bluej.getExtensionPropertyString("BOEBOT-IP", "127.0.0.1");
+								ip = BoeBotControlFrame.this.bluej.getExtensionPropertyString("BOEBOT-IP", "10.10.10.1");
 							System.out.println("Connecting to " + ip);
 							session = jsch.getSession("pi", ip);
 
@@ -280,7 +280,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 							if(session.isConnected())
 							{
 								statusLabel.setText("Connected");
-								debugButton.setEnabled(true);
+								//debugButton.setEnabled(true);
 								uploadButton.setEnabled(true);
 								runButton.setEnabled(true);
 							}
@@ -439,6 +439,9 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			Channel channel = session.openChannel("exec");
 			((ChannelExec) channel).setCommand(command);
 			channel.connect();
+			while(channel.isConnected())
+				delay(1);
+				
 			channel.disconnect();
 
 		} catch (JSchException e) {
@@ -587,7 +590,10 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 				OutputStream out = channel.getOutputStream();
 				InputStream in = channel.getInputStream();
 				channel.connect();
-				while(in.available() == 0)
+				
+				long timeout = System.currentTimeMillis() + 1000;
+				
+				while(in.available() == 0 && System.currentTimeMillis() < timeout)
 					delay(1);
 
 				String name = "";
