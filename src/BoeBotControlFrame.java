@@ -275,7 +275,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 							config.put("StrictHostKeyChecking", "no");
 							session.setConfig(config);
 							
-							session.connect(1000);
+							session.connect(20000);
 							
 							if(session.isConnected())
 							{
@@ -471,7 +471,8 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			channel.connect();
 
 			if (checkAck(in) != 0) {
-				System.exit(0);
+				log.append("Checkack for sending file returned true");
+				return;
 			}
 
 			File _lfile = new File(lfile);
