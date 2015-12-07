@@ -65,7 +65,7 @@ import com.sun.jdi.request.StepRequest;
 public class BoeBotDebugger extends JFrame {
 	
 	private static final long serialVersionUID = 2879121929287423218L;
-	public static String ip = "192.168.137.139"; 
+	public static String ip = "10.10.10.1"; 
 	
 	
 	public static void main(String[] args) {

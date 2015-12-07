@@ -97,7 +97,7 @@ public class BoeBotExtension extends Extension implements PreferenceGenerator
 									if(mainClasses.isEmpty())
 										JOptionPane.showMessageDialog(null, "Could not find main class\nPlease create a class with a \npublic static void main(String[] args)\n{\n}\nmethod");
 									else
-										new BoeBotControlFrame(bpackage.getDir().toString(), BoeBotExtension.this.bluej.getCurrentPackage().getProject().getName(), mainClasses.get(0), BoeBotExtension.this);
+										new BoeBotControlFrame(bpackage.getDir().toString(), BoeBotExtension.this.bluej.getCurrentPackage().getProject().getName().replaceAll(" ",  "_"), mainClasses.get(0), BoeBotExtension.this);
 								} catch (ProjectNotOpenException | PackageNotFoundException e) {
 									e.printStackTrace();
 								}
@@ -140,7 +140,7 @@ public class BoeBotExtension extends Extension implements PreferenceGenerator
 		ArrayList<String> mainClasses = new ArrayList<String>();
 		try {
 			BPackage bpackage = bluej.getCurrentPackage();
-			bpackage.compile(true);
+			bpackage.compile(false);
 			BClass[] classes = bpackage.getClasses();
 			for(BClass c: classes)
 			{

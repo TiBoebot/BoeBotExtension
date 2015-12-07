@@ -12,6 +12,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -37,6 +39,7 @@ import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.text.DefaultCaret;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -93,7 +96,8 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 		log.setFont(new Font("Monospaced", Font.PLAIN, 14));
 		log.setEditable(false);
 		log.setBorder(BorderFactory.createEtchedBorder());
-		
+		DefaultCaret caret = (DefaultCaret)log.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);		
 		
 		JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		statusBar.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -167,6 +171,10 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 					{
 						if(!BoeBotControlFrame.this.isVisible())
 							return;
+						
+						closeRunningApplication();
+						delay(100);
+						
 						if(session.isConnected())
 						{
 							log.setText("");
@@ -214,6 +222,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			public void actionPerformed(ActionEvent arg0) {
 				if(session.isConnected())
 				{
+					closeRunningApplication();
 					log.setText("");
 					runCode();
 				}
@@ -226,6 +235,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			public void actionPerformed(ActionEvent arg0) {
 				if(session.isConnected())
 				{
+					closeRunningApplication();
 					log.setText("");
 			//		runCode(true);
 			//		delay(250);
@@ -331,7 +341,14 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 				execChannel.disconnect();
 			}
 			
-			String command = "cd /home/pi/upload/"+projectName + "/" + versions.getSelectedItem()+"; sudo killall -q java; sudo java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend="+(suspend ? "y" : "n")+" -cp \".:/home/pi/BoeBotLib/BoeBotLib.jar\" -Djava.library.path=/home/pi/BoeBotLib " + BoeBotControlFrame.this.mainClass.getSelectedItem();
+			String command = 
+					"cd /home/pi/upload/"+projectName + "/" + versions.getSelectedItem()+"; " +
+					"sudo killall -q java; " +
+					"sleep 0.5; " +
+					"echo "+projectName + "/" + versions.getSelectedItem()+" > /home/pi/upload/lastrun;\n" +
+					"echo "+BoeBotControlFrame.this.mainClass.getSelectedItem()+" >> /home/pi/upload/lastrun;\n" +
+					"sudo java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend="+(suspend ? "y" : "n")+" -cp \".:/home/pi/BoeBotLib/BoeBotLib.jar\" -Djava.library.path=/home/pi/BoeBotLib " + BoeBotControlFrame.this.mainClass.getSelectedItem();
+			
 			
 			execChannel = session.openChannel("exec");
 			((ChannelExec) execChannel).setCommand(command);
@@ -460,7 +477,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			boolean ptimestamp = true;
 
 			// exec 'scp -t rfile' remotely
-			String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + rfile;
+			String command = "scp " + (ptimestamp ? "-p" : "") + " -t '" + rfile + "'";
 			Channel channel = session.openChannel("exec");
 			((ChannelExec) channel).setCommand(command);
 
@@ -485,6 +502,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 				out.write(command.getBytes());
 				out.flush();
 				if (checkAck(in) != 0) {
+					log.append("Checkack did not return 0\n");
 					return;
 				}
 			}
@@ -494,11 +512,14 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			long filesize = _lfile.length();
 			command = "C0666 " + filesize + " ";
 			if (lfile.lastIndexOf('/') > 0) {
-				command += lfile.substring(lfile.lastIndexOf('/') + 1);
+				command += "'"+lfile.substring(lfile.lastIndexOf('/') + 1) + "'";
+			}else if (lfile.lastIndexOf('\\') > 0) {
+				command += "'"+lfile.substring(lfile.lastIndexOf('\\') + 1) + "'";
 			} else {
-				command += lfile;
+				command += "'" + lfile + "'";
 			}
 			command += "\n";
+
 			out.write(command.getBytes());
 			out.flush();
 			if (checkAck(in) != 0) {
@@ -523,6 +544,7 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			out.write(buf, 0, 1);
 			out.flush();
 			if (checkAck(in) != 0) {
+				log.append("\n\nAck is not 0\n\n\n");
 				return;
 			}
 			out.close();
@@ -619,6 +641,25 @@ public class BoeBotControlFrame extends JFrame implements ActionListener {
 			}
 		
 		return result;
+	}
+
+	private void closeRunningApplication() {
+		try
+		{
+			String ip = "10.10.10.1";							
+			
+			if(BoeBotControlFrame.this.bluej != null)
+				ip = BoeBotControlFrame.this.bluej.getExtensionPropertyString("BOEBOT-IP", "10.10.10.1");
+
+			Socket socket = new Socket();
+			socket.connect(new InetSocketAddress(ip, 9999), 500);
+			socket.getOutputStream().write(0);
+			socket.close();						
+			
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	

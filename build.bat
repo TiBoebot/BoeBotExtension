@@ -9,4 +9,3 @@ cd ..
 xcopy /y BoeBotExtension.jar "C:\Program Files (x86)\bluej\lib\extensions"
 rem svn update BoeBotLib
 xcopy /y BoeBotLib\BoeBotLib.jar "C:\Program Files (x86)\bluej\lib\userlib"
-pause
